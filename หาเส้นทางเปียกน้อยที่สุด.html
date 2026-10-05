@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="th"><head><meta charset="utf-8"><title>หาเส้นทางเปียกน้อยที่สุด</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#fff;--fg:#1d1d1f;--mut:#6b7280;--card:#f3f4f6;--acc:#2563eb;--wet:#dc2626;--dry:#16a34a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111317;--fg:#eceff4;--mut:#9aa3b2;--card:#1d2127;--acc:#60a5fa;--wet:#f87171;--dry:#4ade80}}
+:root[data-theme="dark"]{--bg:#111317;--fg:#eceff4;--mut:#9aa3b2;--card:#1d2127;--acc:#60a5fa;--wet:#f87171;--dry:#4ade80}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,"Noto Sans Thai",sans-serif}
+main{max-width:720px;margin:0 auto;padding:16px}
+h1{font-size:1.25rem;margin:0 0 12px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+select,button{font:inherit;padding:10px;border-radius:10px;border:1px solid var(--mut);background:var(--card);color:var(--fg);flex:1;min-width:120px}
+button{background:var(--acc);color:#fff;border:0;font-weight:600}
+.card{background:var(--card);border-radius:12px;padding:12px;margin:10px 0;cursor:pointer;border:2px solid transparent}
+.card.on{border-color:var(--acc)}
+.tag{font-size:.8rem;color:var(--mut)}
+.wet{color:var(--wet);font-weight:600}.dry{color:var(--dry);font-weight:600}
+svg{width:100%;height:auto;background:var(--card);border-radius:12px;margin-top:12px}
+.e{stroke:var(--mut);stroke-width:1.5;opacity:.5}
+.h{stroke:var(--acc);stroke-width:5;opacity:1}
+text{fill:var(--fg);font-size:12px}
+.ew{fill:var(--mut);font-size:9px}
+</style></head><body><main>
+<h1>☔ หาเส้นทางเปียกน้อยที่สุด</h1>
+<div class="row"><select id="a"></select><select id="b"></select><button id="go">ค้นหา</button></div>
+<div id="out"></div>
+<details style="margin-top:12px"><summary><b>📱 สร้าง QR Code</b></summary>
+<div class="row" style="margin-top:8px"><input id="u" placeholder="วางลิงก์ของหน้านี้" style="flex:3;min-width:180px;padding:10px;border-radius:10px;border:1px solid var(--mut);background:var(--card);color:var(--fg);font:inherit"><button id="q">สร้าง</button></div>
+<div id="qr" style="background:#fff;padding:12px;border-radius:12px;margin-top:8px;display:none;text-align:center"></div></details>
+<svg id="map" viewBox="0 0 760 540"></svg>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+// พิกัดจุด (ชื่อแก้ได้ตรงนี้)
+const N={A7:["A7",336,25],VT:["วิทยาศาสตร์และเทคโนโลยี",163,73],J1:["จุดแยก 1",268,122],MF:["ศูนย์ภาษา",201,206],J2:["จุดแยก 2",278,258],BD:["ศูนย์อาหาร",29,310],A4:["A4",342,307],A2:["A2",516,305],KM:["สำนักคอมพิวเตอร์",714,330],A1:["A1",182,437],P15:["ตึก 15 ชั้น",381,492],SM:["ห้องสมุด",618,498]};
+// [จุด1, จุด2, ระยะรวม, ระยะที่ไม่มีหลังคา]  (ค่าในวงเล็บ)
+const E=[["VT","A7",13,13],["A7","J1",10,10],["VT","J1",20,20],["VT","MF",62,62],["J1","MF",39,39],["VT","BD",94,94],["J1","J2",90,90],["J1","A2",94,94],["J1","KM",138,138],["A7","KM",152,152],["MF","BD",42,42],["MF","J2",13,13],["J2","BD",46,46],["J2","A2",60,0],["J2","A4",22,22],["J2","A1",45,8],["A4","A2",19,0],["A4","A1",35,0],["BD","A1",26,8],["A1","P15",5,5],["P15","A2",48,45],["A2","SM",38,35],["A2","KM",25,2],["P15","SM",23,23],["SM","KM",22,22]].map(e=>[e[0],e[1],e[2],Math.min(e[2],e[3])]);
+const adj={};Object.keys(N).forEach(k=>adj[k]=[]);
+E.forEach(([a,b,d,w],i)=>{adj[a].push([b,d,w,i]);adj[b].push([a,d,w,i])});
+const A=document.getElementById("a"),B=document.getElementById("b"),out=document.getElementById("out"),svg=document.getElementById("map");
+Object.entries(N).forEach(([k,v])=>{A.add(new Option(v[0],k));B.add(new Option(v[0],k))});
+A.value="BD";B.value="KM";
+function paths(s,t){const res=[];(function dfs(u,vis,d,w,ed){if(u===t){res.push({n:[...vis],d,w,ed:[...ed]});return}
+for(const[v,dd,ww,i]of adj[u])if(!vis.includes(v)){vis.push(v);ed.push(i);dfs(v,vis,d+dd,w+ww,ed);vis.pop();ed.pop()}})(s,[s],0,0,[]);
+return res.sort((x,y)=>x.w-y.w||x.d-y.d)}
+let list=[];
+function draw(sel){svg.innerHTML=E.map(([a,b,d,w],i)=>{const p=N[a],q=N[b],on=sel&&sel.ed.includes(i);
+return `<line class="e ${on?'h':''}" x1="${p[1]}" y1="${p[2]}" x2="${q[1]}" y2="${q[2]}"/><text class="ew" x="${(p[1]+q[1])/2}" y="${(p[2]+q[2])/2}">${d}(${w})</text>`}).join("")+
+Object.entries(N).map(([k,v])=>`<circle cx="${v[1]}" cy="${v[2]}" r="6" fill="${sel&&sel.n.includes(k)?'var(--acc)':'var(--mut)'}"/><text x="${v[1]+8}" y="${v[2]-8}">${v[0]}</text>`).join("")}
+function show(i){document.querySelectorAll(".card").forEach((c,j)=>c.classList.toggle("on",j===i));draw(list[i])}
+function run(){const s=A.value,t=B.value;if(s===t){out.innerHTML="<p>เลือกจุดเริ่มต้นและปลายทางให้ต่างกัน</p>";draw();return}
+list=paths(s,t);const top=list.slice(0,6);
+out.innerHTML=`<p class="tag">พบ ${list.length} เส้นทาง (แสดง ${top.length} อันดับแรก เรียงตามเปียกน้อยสุด)</p>`+top.map((p,i)=>
+`<div class="card" data-i="${i}"><b>${i===0?"✅ ดีที่สุด":"ทางเลือก "+i}</b><br>${p.n.map(k=>N[k][0]).join(" → ")}<br><span class="wet">เปียก ${p.w} ม.</span> · <span class="dry">มีหลังคา ${p.d-p.w} ม.</span> · <span class="tag">รวม ${p.d} ม.</span></div>`).join("");
+out.querySelectorAll(".card").forEach(c=>c.onclick=()=>show(+c.dataset.i));show(0)}
+document.getElementById("go").onclick=run;run();
+try{const l=location.href;if(/^https?:/.test(l))document.getElementById("u").value=l}catch(e){}
+document.getElementById("q").onclick=()=>{const v=document.getElementById("u").value.trim(),b=document.getElementById("qr");if(!v||!window.qrcode)return;
+const c=qrcode(0,"M");c.addData(v);c.make();b.innerHTML=c.createSvgTag({cellSize:6,margin:0,scalable:true});b.firstChild.style.cssText="width:100%;max-width:260px;height:auto";b.style.display="block"};
+</script></body></html>
